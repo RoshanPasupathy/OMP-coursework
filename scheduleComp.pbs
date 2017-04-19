@@ -1,0 +1,43 @@
+#
+# All screen output (stdout and stderr) will appear in a file called
+# myjob.pbs.oXXXXX, where XXXXX is the job number assigned at submit time.
+#
+# Roshan Pasupathy, rp3g13
+# based on code by David Henty, EPCC, 25/11/2014
+#
+# Note: Due to timeout, this PBS submission
+#       script was submitted in three parts
+#       >> scheduleComp.pbs ran chunk sizes {1,2,4}
+#       >> scheduleComp.pbs ran chunk sizes {8,16}
+#       >> scheduleComp.pbs ran chunk sizes {32,54}
+
+#PBS -A y14-CDT-Soton
+#PBS -j oe
+#PBS -l walltime=00:01:00
+#PBS -l select=1
+
+cd $PBS_O_WORKDIR
+
+echo '--------------------------------------------------------------------------------'
+export OMP_NUM_THREADS=6
+
+echo 'Started at' `date`
+echo '--------------------------------------------------------------------------------'
+echo 'NUMBER OF THREADS: ' $OMP_NUM_THREADS
+echo.
+
+for chunksize in {1,2,4,8,16,32,64}; do
+	for sched in {"static","dynamic","guided"}; do
+		echo '++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+		export OMP_SCHEDULE="${sched},${chunksize}"
+		echo 'SCHEDULE: ' $sched 'CHUNKSIZE: ' $chunksize
+		echo '++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+		(time aprun -n 1 -d $OMP_NUM_THREADS ./loopsSchedule) 2>&1
+		echo '--------------------------------------------------------------------------------'
+		echo.
+	done
+done
+
+echo '--------------------------------------------------------------------------------'
+echo 'Finished at' `date`
+~

@@ -1,0 +1,42 @@
+#
+# All screen output (stdout and stderr) will appear in a file called
+# myjob.pbs.oXXXXX, where XXXXX is the job number assigned at submit time.
+#
+# Roshan Pasupathy, rp3g13
+# based on code by David Henty, EPCC, 25/11/2014
+#
+# Note: Due to timeout, this PBS submission
+#       script was submitted in three parts
+#       >> exectimeAffinity1.pbs ran chunk sizes {1,2}
+#       >> exectimeAffinity2.pbs ran chunk sizes {3,6}
+#       >> exectimeAffinity3.pbs ran chunk sizes {12,24}
+
+#PBS -A y14-CDT-Soton
+#PBS -j oe
+#PBS -l walltime=00:01:00
+#PBS -l select=1
+
+cd $PBS_O_WORKDIR
+
+echo '--------------------------------------------------------------------------------'
+
+
+echo 'Started at' `date`
+echo '--------------------------------------------------------------------------------'
+
+export OMP_SCHEDULE="dynamic,8"
+
+for threads in {1,2,3,6,12,24}; do
+	for script in {"loopsSchedule","loopsAffinity"}; do
+		export OMP_NUM_THREADS=$threads
+		echo '++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+		echo 'Running' $script 'on'  $OMP_NUM_THREADS 'threads'
+		echo '++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+		(time aprun -n 1 -d $OMP_NUM_THREADS ./$script) 2>&1
+		echo '--------------------------------------------------------------------------------'
+	done
+done
+
+echo '--------------------------------------------------------------------------------'
+echo 'Finished at' `date`
+~
